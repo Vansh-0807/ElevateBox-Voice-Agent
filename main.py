@@ -116,39 +116,76 @@ async def vapi_tools(request: VapiToolRequest):
 
 @app.post("/webhook/qualify-lead")
 async def qualify_lead(request:LeadQualificationRequest):
-    print("Lead Qualification Request Received")
+    score = 0
 
-    print("Budget:", request.budget)
-    print("Business: ", request.business_type)
-    print("Products: ", request.product_count)
-    print("Timeline: ", request.timeline)
-    print("Features: ", request.features)
+    # budget signal
+    budget = request.budget.lower()
+    if budget not in ["unknown", "not decided", "no budget", "none"]:
+        score += 2
 
-    # basic lead qualification logic
-    if(
-        request.budget
-        and request.timeline
-        and request.features
-    ):
-        lead_type = "HOT"
+    # timeline signal
+    timeline = request.timeline.lower()
+    if any(word in timeline for word in [
+        "today",
+        "this week", 
+        "next week",
+        "this month", 
+        "next month",
+        "soon",
+        "immediately"
+    ]):
+        score+=2
 
-    elif request.budget or request.timeline:
-        lead_type = "WARM"
+    elif any(word in timeline for word in[
+        "later",
+        "next year",
+        "not decided",
+        "no timeline"
+    ]):
+        score+=0
 
     else:
-        lead_type = "COLD"
+        score+=1
+
+    # product count signal
+    product_count = request.product_count.lower()
+    if product_count not in [
+        "unknown",
+        "not decided",
+        "none"
+    ]:
+        score+=1
+
+    # features/requirementes
+    features = request.features.lower()
+    if features not in [
+        "unknown",
+        "not decided",
+        "none"
+    ]:
+        score+=1
+
+    # final classfication
+    if score>=5:
+        lead_type =  "HOT"
+
+    elif score >= 2:
+        lead_type =  "WARM"
+
+    else:
+        lead_type =  "COLD"
 
     return{
         "success" : True,
         "lead_type" : lead_type,
+        "score" : score,
         "budget" : request.budget,
         "business_type" : request.business_type,
         "product_count" : request.product_count,
         "timeline" : request.timeline,
         "features" : request.features
     }
-
-
+            
 @app.post("/webhook/call_ended")
 async def call_ended(request: CallEndedRequest):
     return{
