@@ -117,11 +117,41 @@ async def vapi_tools(request: VapiToolRequest):
 @app.post("/webhook/qualify-lead")
 async def qualify_lead(request:LeadQualificationRequest):
     score = 0
+    signals = []
 
     # budget signal
     budget = request.budget.lower()
-    if budget not in ["unknown", "not decided", "no budget", "none"]:
-        score += 2
+    if any(word in budget for word in[
+        "ready",
+        "approved",
+        "allocated",
+        "₹",
+        "rs",
+        "inr",
+        "lakh",
+        "thousand"
+    ]):
+        score+=2
+        signals.append("clear budget")
+
+    elif any(word in budget for word in[
+        "maybe",
+        "around",
+        "roughly",
+        "not sure",
+        "need to decide"
+    ]):
+        score+=1
+        signals.append("uncertain budget")
+
+    elif any(word in budget for word in[
+        "unknown",
+        "not decided",
+        "no budget",
+        "none",
+        "don't know"
+    ]):
+        signals.append("no confirmed budget")
 
     # timeline signal
     timeline = request.timeline.lower()
@@ -129,23 +159,49 @@ async def qualify_lead(request:LeadQualificationRequest):
         "today",
         "this week", 
         "next week",
+        "within a week",
+        "within two weeks",
         "this month", 
         "next month",
         "soon",
         "immediately"
     ]):
-        score+=2
+        score+=3
+        signals.append("near-term launch")
 
     elif any(word in timeline for word in[
+        "few months",
+        "3 months",
+        "4 months",
+        "5 months",
+        "6 months"
+    ]):
+        score+=2
+        signals.append("medium-term launch")
+
+    elif any(word in timeline for word in [
         "later",
         "next year",
+        "sometime next year",
         "not decided",
         "no timeline"
     ]):
-        score+=0
+        signals.append("distant or uncertain timeline")
 
     else:
         score+=1
+
+    # business requirement
+    business_type = request.business_type.lower()
+    if business_type not in [
+        "unknown",
+        "not decided",
+        "none",
+        "just exploring",
+        "just researching"
+    ]:
+        score+=1
+        signals.append("clear business requirement")
 
     # product count signal
     product_count = request.product_count.lower()
@@ -155,15 +211,43 @@ async def qualify_lead(request:LeadQualificationRequest):
         "none"
     ]:
         score+=1
+        signals.append("defined product catalogue")
 
     # features/requirementes
     features = request.features.lower()
     if features not in [
         "unknown",
         "not decided",
-        "none"
+        "none",
+        "just exploring"
     ]:
-        score+=1
+        score+=2
+        signals.append("specific feature requirements")
+
+    # string buying signals
+    combined_text = " ".join([
+        budget,
+        business_type,
+        product_count,
+        timeline,
+        features
+    ])
+
+    if any(phrase in combined_text for phrase in [
+        "want to start",
+        "ready to start",
+        "start immediately",
+        "start soon",
+        "move forward",
+        "move ahead",
+        "send proposal",
+        "send quote",
+        "what is the price",
+        "how much",
+        "next steps"
+    ]):
+        score+=3
+        signals.append("strong buying signal")
 
     # final classfication
     if score>=5:
@@ -179,6 +263,7 @@ async def qualify_lead(request:LeadQualificationRequest):
         "success" : True,
         "lead_type" : lead_type,
         "score" : score,
+        "signals" : signals,
         "budget" : request.budget,
         "business_type" : request.business_type,
         "product_count" : request.product_count,
