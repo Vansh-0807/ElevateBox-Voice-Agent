@@ -41,7 +41,7 @@ def send_whatsapp(phone:str, message:str):
     whatsapp_message = client.messages.create(
         from_="whatsapp:+17372508034",
         to=f"whatsapp:{phone}",
-        content_sid = "content_sid"
+        content_sid = content_id
     )
     print("Twillo Message SID:", whatsapp_message.sid)
     print("Twilio Status: ", whatsapp_message.status)
