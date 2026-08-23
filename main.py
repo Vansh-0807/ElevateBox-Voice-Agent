@@ -34,13 +34,20 @@ class CallEndedRequest(BaseModel):
     status: str
     transcript: str
 
+class LeadQualificationRequest(BaseModel):
+    budget:str
+    business_type:str
+    product_count:str
+    timeline:str
+    features:str
+
 def send_whatsapp(phone:str, message:str):
     print("Sending whatsapp message...")
     print("Phone: ", phone)
     print("Message: ", message)
 
     whatsapp_message = client.messages.create(
-        from_="whatsapp:+17372508034",
+        from_=f"whatsapp:{whatsapp_from}",
         to=f"whatsapp:{phone}",
         content_sid = content_id
     )
@@ -106,6 +113,41 @@ async def vapi_tools(request: VapiToolRequest):
         "message" : message,
         "lead_type" : lead_type
     }
+
+@app.post("/webhook/qualify-lead")
+async def qualify_lead(request:LeadQualificationRequest):
+    print("Lead Qualification Request Received")
+
+    print("Budget:", request.budget)
+    print("Business: ", request.business_type)
+    print("Products: ", request.product_count)
+    print("Timeline: ", request.timeline)
+    print("Features: ", request.features)
+
+    # basic lead qualification logic
+    if(
+        request.budget
+        and request.timeline
+        and request.features
+    ):
+        lead_type = "HOT"
+
+    elif request.budget or request.timeline:
+        lead_type = "WARM"
+
+    else:
+        lead_type = "COLD"
+
+    return{
+        "success" : True,
+        "lead_type" : lead_type,
+        "budget" : request.budget,
+        "business_type" : request.business_type,
+        "product_count" : request.product_count,
+        "timeline" : request.timeline,
+        "features" : request.features
+    }
+
 
 @app.post("/webhook/call_ended")
 async def call_ended(request: CallEndedRequest):
