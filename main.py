@@ -13,6 +13,7 @@ api_key = os.getenv("TWILIO_API_KEY")
 api_secret = os.getenv("TWILIO_API_SECRET")
 whatsapp_from = os.getenv("TWILIO_WHATSAPP_FROM")
 content_id = os.getenv("TWILIO_CONTENT_SID")
+callback_phone = os.getenv("CALLBACK_PHONE")
 
 from twilio.rest import Client
 client = Client(
