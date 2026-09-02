@@ -19,20 +19,6 @@ class LeadQualificationRequest(BaseModel):
     timeline:str
     features:str
 
-def send_whatsapp(phone:str, message:str):
-    print("Sending whatsapp message...")
-    print("Phone: ", phone)
-    print("Message: ", message)
-
-    whatsapp_message = client.messages.create(
-        from_=f"whatsapp:{whatsapp_from}",
-        to=f"whatsapp:{phone}",
-        content_sid = content_id
-    )
-    print("Twillo Message SID:", whatsapp_message.sid)
-    print("Twilio Status: ", whatsapp_message.status)
-    return "Whatsapp message sent successfully."
-
 @app.get("/")
 async def root():
     return {
