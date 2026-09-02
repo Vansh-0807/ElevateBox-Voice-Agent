@@ -1,38 +1,16 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Any
-
 app = FastAPI()
 
 import os
 from dotenv import load_dotenv
 load_dotenv()
 
-account_sid = os.getenv("TWILIO_ACCOUNT_SID")
-api_key = os.getenv("TWILIO_API_KEY")
-api_secret = os.getenv("TWILIO_API_SECRET")
-whatsapp_from = os.getenv("TWILIO_WHATSAPP_FROM")
-content_id = os.getenv("TWILIO_CONTENT_SID")
-callback_phone = os.getenv("CALLBACK_PHONE")
-
-from twilio.rest import Client
-client = Client(
-    api_key,
-    api_secret,
-    account_sid
-)
-
-class VapiWebhookRequest(BaseModel):
-    message: dict[str, Any]
-
-class VapiToolRequest(BaseModel):
-    message: str
-    lead_type: str
-
-class CallEndedRequest(BaseModel):
-    call_id: str
-    status: str
-    transcript: str
+class CallbackRequest(BaseModel):
+    phone: str
+    callback_datetime: str
+    timezone: str 
 
 class LeadQualificationRequest(BaseModel):
     budget:str
@@ -59,59 +37,6 @@ def send_whatsapp(phone:str, message:str):
 async def root():
     return {
         'message': "ElevateBox Voice Agent backend is running"
-    }
-
-@app.post("/webhook/vapi")
-async def vapi_webhook(request:VapiWebhookRequest):
-    message=request.message
-    print("Received Vapi webhook:")
-    print(message)
-
-    message_type = message.get("type")
-    print("Message type = ", message_type)
-
-    if message_type != "tool-calls":
-        return{
-            "results" : []
-        }
-
-    tool_calls = message.get("toolCallList", [])
-
-    results = []
-
-    for tool_call in tool_calls:
-        tool_name = tool_call.get("name")
-        tool_call_id = tool_call.get("id")
-        parameters = tool_call.get("parameters", {})
-
-        if tool_name == "send_whatsapp_midcall":
-
-            phone = parameters.get("phone")
-            whatsapp_message = parameters.get("message")
-
-            result = send_whatsapp(
-                phone, 
-                whatsapp_message
-            )
-        else:
-            result = f"Unknown tool: {tool_name}"
-        results.append({
-            "toolCallId": tool_call_id,
-            "result" : result
-        })
-    return {
-            "results" : results
-        }
-
-@app.post("/webhook/vapi-tools")
-async def vapi_tools(request: VapiToolRequest):
-    message = request.message
-    lead_type = request.lead_type
-
-    return{
-        "success" : True,
-        "message" : message,
-        "lead_type" : lead_type
     }
 
 @app.post("/webhook/qualify-lead")
@@ -249,7 +174,7 @@ async def qualify_lead(request:LeadQualificationRequest):
         score+=3
         signals.append("strong buying signal")
 
-    # final classfication
+    # final lead classfication
     if score>=5:
         lead_type =  "HOT"
 
@@ -272,9 +197,14 @@ async def qualify_lead(request:LeadQualificationRequest):
     }
             
 @app.post("/webhook/call_ended")
-async def call_ended(request: CallEndedRequest):
-    return{
+async def call_ended(data: dict[str, any]):
+    print("Outpero call-ended webhook received ")
+
+    print("Webhook data:")
+    print(data)
+
+    return {
         "success" : True,
-        "message" : "Call - ended webhook received"
+        "message" : "Call-ended webhook received"
     }
 
