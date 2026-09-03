@@ -190,20 +190,39 @@ async def call_ended(data: dict[str, Any]):
     print(data)
 
     phone = data.get("to_number")
-    summary = data.get("summary")
     outcome = data.get("outcome")
-    transcript = data.get("transcript") 
-    captured = data.get("captured")
+    summary = data.get("summary")
+    transcript = data.get("transcript", []) 
+    captured = data.get("captured", {})
 
-    print("Phone : ", phone)
-    print("Outcome :", outcome)
-    print("Summary : ", summary)
-    print("Captured: ", captured)
-    print("Transcript: ", transcript)
+    # convert transcript into readable text
+    transcript_text = ""
+
+    if isinstance(transcript, list):
+        for message in transcript:
+            role = message.get("role", "")
+            content = message.get("content", "")
+
+            transcript_text += f"{role}: {content}\n"
+
+    follow_up_context = {
+        "phone" : phone,
+        "outcome" : outcome,
+        "summary" : summary,
+        "captured" : captured,
+        "transcript" : transcript_text.strip()
+    }
+    print("------FOLLOW-UP CONTEXT------")
+    print("Phone : ", follow_up_context["phone"])
+    print("Outcome :", follow_up_context["outcome"])
+    print("Summary : ", follow_up_context["summary"])
+    print("Captured: ", follow_up_context["captured"])
+    print("Transcript: ", follow_up_context["transcript"])
 
 
     return {
         "success" : True,
-        "message" : "Call-ended webhook received"
-    }
+        "message" : "Call-ended webhook received",
+        "follow_up_context": follow_up_context
+    }   
 
