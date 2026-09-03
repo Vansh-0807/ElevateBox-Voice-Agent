@@ -189,6 +189,19 @@ async def call_ended(data: dict[str, Any]):
     print("Webhook data:")
     print(data)
 
+    phone = data.get("phone")
+    summary = data.get("summary")
+    outcome = data.get("outcome")
+    transcript = data.get("transcript") 
+    captured = data.get("captured")
+
+    print("Phone : ", phone)
+    print("Outcome :", outcome)
+    print("Summary : ", summary)
+    print("Captured: ", captured)
+    print("Transcript: ", transcript)
+
+
     return {
         "success" : True,
         "message" : "Call-ended webhook received"
