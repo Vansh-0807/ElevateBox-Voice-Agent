@@ -219,10 +219,74 @@ async def call_ended(data: dict[str, Any]):
     print("Captured: ", follow_up_context["captured"])
     print("Transcript: ", follow_up_context["transcript"])
 
+    follow_up_message = generate_follow_up_message(
+        phone=phone,
+        summary=summary,
+        outcome=outcome,
+        captured=captured
+    )
+
+    print("=====Follow Up Message====")
+    print(follow_up_message)
 
     return {
         "success" : True,
         "message" : "Call-ended webhook received",
-        "follow_up_context": follow_up_context
+        "follow_up_context": follow_up_context,
+        "follow_up_message" : follow_up_message
     }   
 
+def generate_follow_up_message(
+        phone,
+        summary,
+        outcome,
+        captured
+):
+    products = captured.get("products")
+    required_features = captured.get("required_features")
+    budget = captured.get("budget")
+    timeline = captured.get("timeline")
+    interest_level = captured.get("interest_level")
+    next_step = captured.get("next_step")
+
+    message = "Hi, thank you for speaking with me today. "
+
+    if summary:
+        message += f"Based on our conversation, {summary}"
+
+    if products:
+        message += f"Your current budget discussed was {budget}. "
+
+    if required_features:
+        message += (
+            f"The key e-commerce requirements you mentioned were "
+            f"{required_features}."
+        )
+
+    if budget:
+        message += f"Your current budget discussed was {budget}. "
+
+    if timeline:
+        message += f"You mentioned a timeline of {timeline}."
+
+    if interest_level:
+        message += (
+            f"Based on our conversatiom, your current interest level"
+            f"is {interest_level}. "
+        )
+    if next_step:
+        message += f"Our next step is {next_step}." 
+
+    message += (
+        "I'm sharing my resume and a brief architecture overview "
+        "for your reference. "
+    )   
+
+    if phone:
+        message += f"You can reach me at {phone}. "
+
+    message += (
+        "Please feel free to reach out if you like to discuss"
+        "the e-commerce solution further."
+    )
+    return message
