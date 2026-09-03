@@ -183,7 +183,7 @@ async def qualify_lead(request:LeadQualificationRequest):
     }
             
 @app.post("/webhook/call_ended")
-async def call_ended(data: dict[str, any]):
+async def call_ended(data: dict[str, Any]):
     print("Outpero call-ended webhook received ")
 
     print("Webhook data:")
