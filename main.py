@@ -189,7 +189,7 @@ async def call_ended(data: dict[str, Any]):
     print("Webhook data:")
     print(data)
 
-    phone = data.get("phone")
+    phone = data.get("to_number")
     summary = data.get("summary")
     outcome = data.get("outcome")
     transcript = data.get("transcript") 
